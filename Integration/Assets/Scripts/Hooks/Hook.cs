@@ -30,21 +30,21 @@ namespace Assets.Scripts.Players.Hooks
             _rigidbody = this.GetOrThrow<Rigidbody>();
         }
 
-        void OnTriggerEnter(Collider other)
+        void OnCollisionEnter(Collision other)
         {
             IsColliding = true;
             _rigidbody.velocity = Vector3.zero;
 
-            HookedObject = other?.GetComponent<Hookable>();
+            HookedObject = other?.gameObject.GetComponent<Hookable>();
         }
 
-        void OnTriggerExit(Collider other)
+        void OnCollisionExit()
         {
             IsColliding = false;
-            HookedObject = null;
+            HookedObject = null;            
         }
 
-        public void Move(Vector3 velocity)
+        public void SetVelocity(Vector3 velocity)
         {
             _rigidbody.velocity = velocity;
         }
@@ -80,6 +80,7 @@ namespace Assets.Scripts.Players.Hooks
             }
 
             HookedObject.transform.SetParent(_hookedObjectOriginalParent, worldPositionStays: true);
+            _hookedObjectOriginalParent = null;
 
             HookedObject.RigidBody.isKinematic = false;
         }

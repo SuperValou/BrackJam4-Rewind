@@ -121,7 +121,8 @@ namespace Assets.Scripts.Players
                 }
             }
 
-            if (hookLauncher.HookIsAttached && hookLauncher.IsRewinding && !hookLauncher.HookedObjectIsMovable)
+            //if (hookLauncher.HookIsAttached && hookLauncher.IsRewinding && !hookLauncher.HookedObjectIsMovable)
+            if (hookLauncher.IsRewinding)
             {
                 // Move the player to the hooked object
                 var rewindDirection = (hookLauncher.HookPosition - this.transform.position).normalized;
