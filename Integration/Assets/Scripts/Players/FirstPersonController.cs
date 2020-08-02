@@ -1,23 +1,24 @@
-﻿using Assets.Scripts.Utilities;
+﻿using Assets.Scripts.Players.Hooks;
+using Assets.Scripts.Players.Inputs;
+using Assets.Scripts.Utilities;
 using UnityEngine;
 
-namespace Assets.Scripts.Controllers
+namespace Assets.Scripts.Players
 {
     [RequireComponent(typeof(CharacterController))]
     public class FirstPersonController : MonoBehaviour
     {
+        // -- Editor
+
         [Header("Values")]
-        [Tooltip("How fast the player moves.")]
-        public float walkSpeedFactor = 10f;
-
-        [Tooltip("How high the player jumps when hitting the jump button.")]
-        public float jumpSpeed = 11f;
-
-        [Tooltip("How fast the player falls after jumping.")]
-        public float jumpGravity = 25f;
-
-        [Tooltip("How fast the player falls when not standing on anything.")]
-        public float fallGravity = 8f;
+        [Tooltip("Speed of the player when moving (m/s).")]
+        public float walkSpeed = 10f;
+		
+        [Tooltip("Vertical speed of the player when hitting the jump button (m/s).")]
+        public float jumpSpeed = 15f;
+        
+        [Tooltip("Gravity pull applied on the player (m/s²).")]
+        public float gravity = 35f;
         
         [Tooltip("Units that player can fall before a falling function is run.")]
         [SerializeField]
@@ -25,29 +26,32 @@ namespace Assets.Scripts.Controllers
 
         [Header("Parts")]
         public Transform headTransform;
-
-        [Tooltip("How far up can you look?")]
+        
+        [Tooltip("How far up can you look? (degrees)")]
         public float maxUpPitchAngle = 60;
 
-        [Tooltip("How far down can you look?")]
+        [Tooltip("How far down can you look? (degrees)")]
         public float maxDownPitchAngle = -60;
 
-        [Header("External")]
+        [Header("References")]
         public AbstractInputManager inputManager;
+        public HookLauncher hookLauncher;
 
+        // -- Class
 
         private Transform _transform;
         private CharacterController _controller;
 
         private bool _isGrounded;
-        private bool _isJumping;
-        private bool _isFalling;
+
+        private bool _isFalling;		
         private float _fallStartHeigth;
         
-        private Vector3 _velocityVector = Vector3.zero;
+        private Vector3 _externalVelocityVector = Vector3.zero; // x is left-right, y is up-down, z is forward-backward
+        private Vector3 _rewindingHookVelocityVector = Vector3.zero;
 
         private float _headPitch = 0; // rotation to look up or down
-
+        private bool _applyGravity = true;
 
         void Start()
         {
@@ -80,10 +84,11 @@ namespace Assets.Scripts.Controllers
 
         private void UpdateMove()
         {
-            Vector3 inputMovement = inputManager.GetMoveVector();
-
+			// Movement
             if (_isGrounded)
             {
+                _externalVelocityVector = Vector3.zero;
+                
                 // If we were falling, and we fell a vertical distance greater than the threshold, run a falling damage routine
                 if (_isFalling)
                 {
@@ -92,14 +97,6 @@ namespace Assets.Scripts.Controllers
                     {
                         OnFell(_fallStartHeigth - _transform.position.y);
                     }
-                }
-
-                // Jump
-                _isJumping = false;
-                if (inputManager.JumpButtonDown())
-                {
-                    _velocityVector.y = jumpSpeed;
-                    _isJumping = true;
                 }
             }
             else
@@ -112,25 +109,40 @@ namespace Assets.Scripts.Controllers
                 }
             }
 
-            Vector3 localInputSpeedVector = new Vector3(x: inputMovement.x, y: 0, z: inputMovement.y);
-            Vector3 globalInputSpeedVector = _transform.TransformDirection(localInputSpeedVector);
-            Vector3 inputSpeedVector = globalInputSpeedVector * walkSpeedFactor;
+            // Hook
+            if (hookLauncher.CanLaunchHook)
+            {
+                _rewindingHookVelocityVector = Vector3.zero;
+                _applyGravity = true;
 
-            _velocityVector.x = inputSpeedVector.x;
-            _velocityVector.z = inputSpeedVector.z;
+                if (inputManager.FireButtonDown())
+                {
+                    hookLauncher.LaunchHook();
+                }
+            }
 
+            if (hookLauncher.HookIsAttached && !hookLauncher.IsRewinding)
+            {
+                _rewindingHookVelocityVector = (hookLauncher.GetAttachedPosition() - this.transform.position).normalized * hookLauncher.rewindVelocity;
+                hookLauncher.RewindHook();
+                _applyGravity = false;
+            }
+            
             // Apply gravity
-            float gravity = _isJumping ? jumpGravity : fallGravity;
-            _velocityVector.y -= gravity * Time.deltaTime;
-
+            if (_applyGravity)
+            {
+                _externalVelocityVector.y -= gravity * Time.deltaTime;
+            }
+            
             // Check ceilling
             if (_controller.collisionFlags.HasFlag(CollisionFlags.Above))
             {
-                _velocityVector.y = Mathf.Min(0, _velocityVector.y);
+                _externalVelocityVector.y = Mathf.Min(0, _externalVelocityVector.y);
             }
 
             // Actually move the controller
-            _controller.Move(_velocityVector * Time.deltaTime);
+            Vector3 controllerVelocity = _externalVelocityVector + _rewindingHookVelocityVector;
+            _controller.Move(controllerVelocity * Time.deltaTime);
             _isGrounded = _controller.isGrounded;
         }
         

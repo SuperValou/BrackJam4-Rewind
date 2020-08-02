@@ -1,15 +1,20 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Controllers
+namespace Assets.Scripts.Players.Inputs
 {
     public class MouseKeyboardInputManager : AbstractInputManager
     {
+        // -- Editor
+
         [Header("Mouse")]
         public CursorLockMode cursorLockMode = CursorLockMode.Locked;
-        public float mouseSensitivity = 12;
-        
+        public float mouseSensitivity = 12f;
+        public float scrollSensitivity = 1f;
+
         [Header("Keyboard")]
         public float keyboardSensitivity = 1f;
+
+        // -- Class
 
         // Mouse
         private const string MouseHorizontalAxisName = "Mouse X";
@@ -19,14 +24,17 @@ namespace Assets.Scripts.Controllers
         // Keyboard
         private const string KeyboardHorizontalAxisName = "Horizontal";
         private const string KeyboardVerticalAxisName = "Vertical";
-
-        private const string KeyboardRunButtonName = "Run";
-        private const string KeyboardJumpButtonName = "Jump";
-
-
+        
+        private readonly KeyCode _keyboardJumpButtonKey = KeyCode.Space;
+        
         void Start()
         {
             Cursor.lockState = cursorLockMode;
+        }
+
+        void OnDestroy()
+        {
+            Cursor.lockState = CursorLockMode.None;
         }
 
         public override Vector2 GetLookVector()
@@ -39,12 +47,12 @@ namespace Assets.Scripts.Controllers
             return mouseMovement * mouseSensitivity;
         }
 
-        public override Vector2 GetMoveVector()
+        public override Vector3 GetMoveVector()
         {
-            float x = Input.GetAxis(KeyboardHorizontalAxisName);
-            float y = Input.GetAxis(KeyboardVerticalAxisName);
+            float leftRight = Input.GetAxis(KeyboardHorizontalAxisName);
+            float forwardBackward = Input.GetAxis(KeyboardVerticalAxisName);
 
-            return keyboardSensitivity * new Vector2(x, y);
+            return keyboardSensitivity * new Vector3(x: leftRight, y: 0, z: forwardBackward);
         }
 
         public override bool FireButtonDown()
@@ -62,24 +70,14 @@ namespace Assets.Scripts.Controllers
             return Input.GetMouseButtonUp(MouseFireButton);
         }
 
-        public override bool RunButtonDown()
-        {
-            return Input.GetButtonDown(KeyboardRunButtonName);
-        }
-
-        public override bool RunButton()
-        {
-            return Input.GetButton(KeyboardRunButtonName);
-        }
-
         public override bool JumpButton()
         {
-            return Input.GetButton(KeyboardJumpButtonName);
+            return Input.GetKeyDown(_keyboardJumpButtonKey);
         }
 
         public override bool JumpButtonDown()
         {
-            return Input.GetButtonDown(KeyboardJumpButtonName);
+            return Input.GetKeyDown(_keyboardJumpButtonKey);
         }
     }
 }

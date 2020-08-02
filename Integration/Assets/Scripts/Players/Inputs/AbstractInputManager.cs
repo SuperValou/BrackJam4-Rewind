@@ -1,6 +1,6 @@
 ﻿using UnityEngine;
 
-namespace Assets.Scripts.Controllers
+namespace Assets.Scripts.Players.Inputs
 {
     public abstract class AbstractInputManager : MonoBehaviour
     {
@@ -12,7 +12,7 @@ namespace Assets.Scripts.Controllers
         /// <summary>
         /// Returns the input vector for moving around.
         /// </summary>
-        public abstract Vector2 GetMoveVector();
+        public abstract Vector3 GetMoveVector();
 
         /// <summary>
         /// Returns true during the frame where the Fire button is pressed.
@@ -29,9 +29,14 @@ namespace Assets.Scripts.Controllers
         /// </summary>
         public abstract bool FireButtonUp();
 
-        public abstract bool RunButtonDown();
-        public abstract bool RunButton();
+        /// <summary>
+        /// Returns wheter or not the Jump button is held down.
+        /// </summary>
         public abstract bool JumpButton();
+
+        /// <summary>
+        /// Returns true during the frame where the Jump button is pressed.
+        /// </summary>
         public abstract bool JumpButtonDown();
     }
 }
