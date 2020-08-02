@@ -121,13 +121,15 @@ namespace Assets.Scripts.Players
                 }
             }
 
-            if (hookLauncher.HookIsAttached && !hookLauncher.IsRewinding)
+            if (hookLauncher.HookIsAttached && hookLauncher.IsRewinding && !hookLauncher.HookedObjectIsMovable)
             {
-                _rewindingHookVelocityVector = (hookLauncher.GetAttachedPosition() - this.transform.position).normalized * hookLauncher.rewindVelocity;
-                hookLauncher.RewindHook();
+                // Move the player to the hooked object
+                var rewindDirection = (hookLauncher.HookPosition - this.transform.position).normalized;
+                _rewindingHookVelocityVector =  rewindDirection * hookLauncher.rewindVelocity;
+                
                 _applyGravity = false;
             }
-            
+
             // Apply gravity
             if (_applyGravity)
             {
