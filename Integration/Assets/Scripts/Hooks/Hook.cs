@@ -7,6 +7,7 @@ namespace Assets.Scripts.Players.Hooks
     public class Hook : MonoBehaviour
     {
         private Rigidbody _rigidbody;
+        private Collider _collider;
 
         private Transform _hookedObjectOriginalParent;
 
@@ -28,6 +29,7 @@ namespace Assets.Scripts.Players.Hooks
         void Start()
         {
             _rigidbody = this.GetOrThrow<Rigidbody>();
+            _collider = this.GetOrThrow<Collider>();
         }
 
         void OnCollisionEnter(Collision other)
@@ -41,7 +43,6 @@ namespace Assets.Scripts.Players.Hooks
         void OnCollisionExit()
         {
             IsColliding = false;
-            HookedObject = null;            
         }
 
         public void SetVelocity(Vector3 velocity)
@@ -61,6 +62,8 @@ namespace Assets.Scripts.Players.Hooks
                 throw new InvalidOperationException($"{nameof(Hook)} cannot {nameof(HoldTight)} to '{HookedObject}' because it is not movable.");
             }
 
+            _collider.enabled = false;
+
             _hookedObjectOriginalParent = HookedObject.transform.parent;
             HookedObject.transform.SetParent(this.transform, worldPositionStays: true);
 
@@ -71,18 +74,23 @@ namespace Assets.Scripts.Players.Hooks
         {
             if (HookedObject == null)
             {
-                throw new InvalidOperationException($"{nameof(Hook)} cannot {nameof(LetGo)} {nameof(HookedObject)} because it is null.");
+                _collider.enabled = true;
+                return;
             }
 
-            if (!HookedObject.isMovable)
+            if (_hookedObjectOriginalParent == null)
             {
-                throw new InvalidOperationException($"{nameof(Hook)} cannot {nameof(LetGo)} '{HookedObject}' because it is not movable.");
+                _collider.enabled = true;
+                return;
             }
 
             HookedObject.transform.SetParent(_hookedObjectOriginalParent, worldPositionStays: true);
             _hookedObjectOriginalParent = null;
 
             HookedObject.RigidBody.isKinematic = false;
+
+            HookedObject = null;
+            _collider.enabled = true;
         }
     }
 }

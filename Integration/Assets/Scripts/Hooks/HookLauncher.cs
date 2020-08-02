@@ -63,6 +63,7 @@ namespace Assets.Scripts.Players.Hooks
                     return;
                 }
 
+                // hook either collided with something or reached the maximum distance
                 hook.SetVelocity(Vector3.zero);
                 IsUnwinding = false;
                 _shouldRewind = true;
@@ -76,28 +77,27 @@ namespace Assets.Scripts.Players.Hooks
                     hook.HoldTight();
                 }
 
-                float maxRewindDuration = 0.5f + maxHookDistance / Mathf.Max(0.1f, rewindVelocity);
+                float maxRewindDuration = maxHookDistance / Mathf.Max(0.1f, rewindVelocity);
                 _rewindMaxTime = Time.time + maxRewindDuration;
-                IsRewinding = true;
 
+                IsRewinding = true;
                 _shouldRewind = false;
-                return;
+                return; // enough for this frame
             }
 
             if (IsRewinding)
             {
-                //if (hook.IsHooked && !hook.HookedObject.isMovable)
-                //{
-                //    // hook stays where it is, palyer will be "rewinded" to it
-                //}
-                //else
-                //{
-                //    // rewind hook to the player
-                //    var rewindDirection = (this.transform.position - hook.transform.position).normalized;
-                //    Vector3 velocity = rewindDirection * rewindVelocity;
-                //    hook.SetVelocity(velocity);
-                //}
-
+                if (hook.IsHooked && !hook.HookedObject.isMovable)
+                {
+                    // hook stays where it is, palyer will be "rewinded" to it
+                }
+                else
+                {
+                    // rewind hook to the player
+                    var rewindDirection = (this.transform.position - hook.transform.position).normalized;
+                    Vector3 velocity = rewindDirection * rewindVelocity;
+                    hook.SetVelocity(velocity);
+                }
 
                 if (Time.time > _rewindMaxTime)
                 {
@@ -116,11 +116,8 @@ namespace Assets.Scripts.Players.Hooks
 
         public void Reset()
         {
-            if (hook.IsHooked && hook.HookedObject.isMovable)
-            {
-                hook.LetGo();
-            }
-
+            hook.LetGo();
+            
             hook.SetVelocity(Vector3.zero);
             hook.transform.position = this.transform.position;
             hook.transform.rotation = this.transform.rotation;

@@ -121,11 +121,10 @@ namespace Assets.Scripts.Players
                 }
             }
 
-            //if (hookLauncher.HookIsAttached && hookLauncher.IsRewinding && !hookLauncher.HookedObjectIsMovable)
-            if (hookLauncher.IsRewinding)
+            if (hookLauncher.HookIsAttached && hookLauncher.IsRewinding && !hookLauncher.HookedObjectIsMovable)
             {
                 // Move the player to the hooked object
-                var rewindDirection = (hookLauncher.HookPosition - this.transform.position).normalized;
+                var rewindDirection = (hookLauncher.hook.HookedObject.transform.position - this.transform.position).normalized;
                 _rewindingHookVelocityVector =  rewindDirection * hookLauncher.rewindVelocity;
                 
                 _applyGravity = false;
